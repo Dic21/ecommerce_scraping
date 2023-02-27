@@ -2,6 +2,9 @@ from bs4 import BeautifulSoup
 import csv
 from selenium import webdriver
 from datetime import date
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 today = date.today()
 
@@ -18,13 +21,14 @@ list = [
 
 final_index = len(list)-1
 
+driver = webdriver.Chrome("./chromedriver")
+options = webdriver.ChromeOptions()
+options.add_argument("--headless")
+driver = webdriver.Chrome(options = options)
+
 def collect_data(cate, round):
-    driver = webdriver.Chrome("./chromedriver")
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    driver = webdriver.Chrome(options = options)
-    driver.implicitly_wait(20)
     driver.get(cate['url'])
+    WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, 'productGrid'))) 
     html = driver.page_source
     csvfile = f"hktv-{cate['name']}-{today}.csv"
 
@@ -54,9 +58,6 @@ def collect_data(cate, round):
     #write to csv
     with open(csvfile, 'w+', newline="", encoding='UTF-8') as fp:
         writer = csv.writer(fp)
-        # writer.writerow(["Ranking", "Goods", "URL", "Price", "RecordDate"])
-        # for item in items:
-        #     writer.writerow(item)
 
         writer.writerow(["Ranking", "Brand", "Goods", "URL", "Price", "RecordDate"])
         for item in items:
@@ -64,7 +65,8 @@ def collect_data(cate, round):
     
     if(round == final_index):
         print("Finish!")
-        driver.quit()
 
 for i in range(len(list)):
     collect_data(list[i], i)
+
+driver.quit()
